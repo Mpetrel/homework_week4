@@ -1,0 +1,7 @@
+server:
+  grpc:
+    addr: 0.0.0.0:8081
+data:
+  database:
+    driver: sqlite3
+    source: file::memory:?cache=shared

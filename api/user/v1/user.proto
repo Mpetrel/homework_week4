@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package user.v1;
+
+option go_package = "homework_week4/api/user/v1";
+
+message AddUserRequest {
+    string name = 1;
+    string sex = 2;
+    int32 age = 3;
+}
+
+message AddUserReply {
+    int32 code = 1;
+    string message = 2;
+}
+
+message FetchUsersReply {
+    message UserInfo {
+        int32 id = 1;
+        string name = 2;
+        string sex = 3;
+        int32 age = 4;
+    }
+    repeated UserInfo users = 1;
+}
+
+message EmptyMessage {}
+
+service User {
+    rpc AddUser(AddUserRequest) returns (AddUserReply) {}
+    rpc FetchUser(EmptyMessage) returns (FetchUsersReply) {}
+}
