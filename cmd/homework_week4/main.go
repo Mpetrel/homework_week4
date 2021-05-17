@@ -1,20 +1,22 @@
 package main
 
 import (
-	"fmt"
+	"flag"
 	"gopkg.in/yaml.v2"
 	"homework_week4/internal/conf"
+	"homework_week4/internal/data"
 	"io/ioutil"
-	"os"
-	"path/filepath"
+	"log"
+	"net"
 )
 
 func main() {
-	execPath, err := os.Executable()
-	fmt.Println(execPath)
-	str := filepath.Join(filepath.Dir(execPath), "../../configs/config.yaml")
-	fmt.Println(str)
-	yamlFile, err := ioutil.ReadFile("E:\\dev\\go_workspace\\homework_week4\\configs\\config.yaml")
+	var flagConf string
+	flag.StringVar(&flagConf, "conf", "../../configs", "config path, eg: -conf config.yaml")
+	flag.Parse()
+
+	log.Println(flagConf)
+	yamlFile, err := ioutil.ReadFile(flagConf)
 	if err != nil {
 		panic(err)
 	}
@@ -22,6 +24,23 @@ func main() {
 	if err = yaml.Unmarshal(yamlFile, &bc); err != nil {
 		panic(err)
 	}
-
-	fmt.Println(bc.Data)
+	// setup db
+	err = data.SetupDB(bc.GetData())
+	if err != nil {
+		panic(err)
+	}
+	// start service
+	lis, err := net.Listen("tcp", bc.GetServer().GetGrpc().GetAddr())
+	if err != nil {
+		panic(err)
+	}
+	s, err := initServer(bc.GetServer(), bc.GetData())
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("start rpc server at: %s", bc.GetServer().GetGrpc().GetAddr())
+	err = s.Serve(lis)
+	if err != nil {
+		panic(err)
+	}
 }

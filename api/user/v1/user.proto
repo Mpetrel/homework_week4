@@ -28,6 +28,6 @@ message FetchUsersReply {
 message EmptyMessage {}
 
 service User {
-    rpc AddUser(AddUserRequest) returns (AddUserReply) {}
-    rpc FetchUser(EmptyMessage) returns (FetchUsersReply) {}
+    rpc AddUser(AddUserRequest) returns (AddUserReply);
+    rpc FetchUser(EmptyMessage) returns (FetchUsersReply);
 }

@@ -6,7 +6,7 @@ type User struct {
 	gorm.Model
 	Name string
 	Sex string
-	Age int
+	Age int32
 }
 
 type UserRepo interface {
@@ -26,4 +26,8 @@ func NewUserUsecase(repo UserRepo) *UserUsecase {
 
 func (uc *UserUsecase) Create(u *User) error {
 	return uc.repo.CreateUser(u)
+}
+
+func (uc *UserUsecase) Fetch() ([] User, error) {
+	return uc.repo.FetchAll()
 }

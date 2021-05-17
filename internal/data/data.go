@@ -1,24 +1,17 @@
 package data
 
 import (
-	"gorm.io/driver/sqlite"
+	"github.com/google/wire"
 	"gorm.io/gorm"
-	"homework_week4/internal/conf"
 )
 
-var _db *gorm.DB
+
+var ProviderSet = wire.NewSet(NewData, NewUserRepo)
 
 type Data struct {
 	db *gorm.DB
 }
 
-func NewData(c *conf.Data) (*Data, error) {
-	if _db == nil {
-		var err error
-		_db, err = gorm.Open(sqlite.Open(c.Database.Source), &gorm.Config{})
-		if err != nil {
-			return nil, err
-		}
-	}
-	return &Data{db: _db}, nil
+func NewData() (*Data, error) {
+	return &Data{db: db}, nil
 }
