@@ -1,13 +1,19 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
 	"gopkg.in/yaml.v2"
 	"homework_week4/internal/conf"
 	"homework_week4/internal/data"
 	"io/ioutil"
 	"log"
 	"net"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -29,7 +35,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// start service
+
+	// create service
 	lis, err := net.Listen("tcp", bc.GetServer().GetGrpc().GetAddr())
 	if err != nil {
 		panic(err)
@@ -38,9 +45,39 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("start rpc server at: %s", bc.GetServer().GetGrpc().GetAddr())
-	err = s.Serve(lis)
-	if err != nil {
+
+	// run service by errgroup
+	group, ctx := errgroup.WithContext(context.Background())
+	// listen system event
+	group.Go(func() error {
+		c := make(chan os.Signal)
+		signal.Notify(c, os.Interrupt, os.Kill, syscall.SIGTERM, syscall.SIGINT)
+		select {
+		case <- ctx.Done():
+			return ctx.Err()
+		case sig := <- c:
+			return errors.Errorf("receive system signal: %v", sig)
+		}
+	})
+
+	group.Go(func() error {
+		select {
+		case <-ctx.Done():
+			log.Printf("errgroup finished, close server..")
+		}
+		// stop server
+		s.Stop()
+		return nil
+	})
+
+	group.Go(func() error {
+		log.Printf("start rpc server at: %s", bc.GetServer().GetGrpc().GetAddr())
+		err := s.Serve(lis)
+		return err
+	})
+
+	if err = group.Wait(); err != nil {
 		panic(err)
 	}
+
 }
